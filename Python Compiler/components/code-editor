@@ -1,0 +1,38 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
+import FallbackEditor from "./fallback-editor"
+
+const CodeEditorComponent = dynamic(() => import("./code-editor"), {
+  ssr: false,
+  loading: () => <FallbackEditor code="" setCode={() => {}} />,
+})
+
+interface CodeEditorWrapperProps {
+  code: string
+  setCode: (code: string) => void
+}
+
+export default function CodeEditorWrapper({ code, setCode }: CodeEditorWrapperProps) {
+  const [editorFailed, setEditorFailed] = useState(false)
+
+  useEffect(() => {
+    // Set a timeout to detect if the editor fails to load
+    const timeout = setTimeout(() => {
+      // Check if CodeMirror is available
+      if (typeof window !== "undefined" && !window.hasOwnProperty("CodeMirror")) {
+        setEditorFailed(true)
+      }
+    }, 3000)
+
+    return () => clearTimeout(timeout)
+  }, [])
+
+  if (editorFailed) {
+    return <FallbackEditor code={code} setCode={setCode} />
+  }
+
+  return <CodeEditorComponent code={code} setCode={setCode} />
+}
+
